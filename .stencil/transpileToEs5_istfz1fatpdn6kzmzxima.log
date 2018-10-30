@@ -1,0 +1,29 @@
+/*! Built with http://stenciljs.com */
+App.loadBundle('/**:bundle-id:**/', ['exports'], function (exports) {
+    var h = window.App.h;
+    var AppRoot = /** @class */ (function () {
+        function AppRoot() {
+        }
+        AppRoot.prototype.render = function () {
+            return (h("div", null, h("main", null, h("stencil-router", null, h("stencil-route-switch", { scrollTopOffset: 0 }, h("stencil-route", { url: '/', component: 'app-home', exact: true }), h("stencil-route", { url: '/profile/:name', component: 'app-profile' }), h("stencil-route", { url: '/root', component: 'app-main' }))))));
+        };
+        Object.defineProperty(AppRoot, "is", {
+            get: function () { return "app-root"; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppRoot, "encapsulation", {
+            get: function () { return "shadow"; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppRoot, "style", {
+            get: function () { return "/**style-placeholder:app-root:**/"; },
+            enumerable: true,
+            configurable: true
+        });
+        return AppRoot;
+    }());
+    exports.AppRoot = AppRoot;
+    Object.defineProperty(exports, '__esModule', { value: true });
+});

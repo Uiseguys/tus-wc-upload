@@ -1,0 +1,40 @@
+{
+  "name": "Stencil Starter",
+  "short_name": "Stencil",
+  "start_url": "/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "assets/icon/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon/cancel.svg",
+      "sizes": "512x512",
+      "type": "image/svg"
+    },
+    {
+      "src": "assets/icon/checked.svg",
+      "sizes": "512x512",
+      "type": "image/svg"
+    },
+    {
+      "src": "assets/icon/play-button.svg",
+      "sizes": "512x512",
+      "type": "image/svg"
+    },
+    {
+      "src": "assets/icon/pause-button.svg",
+      "sizes": "512x512",
+      "type": "image/svg"
+    },
+    {
+      "src": "assets/icon/error-triangle.svg",
+      "sizes": "512x512",
+      "type": "image/svg"
+    }
+  ],
+  "background_color": "#16161d",
+  "theme_color": "#16161d"
+}

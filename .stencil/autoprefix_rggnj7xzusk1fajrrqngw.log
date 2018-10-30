@@ -1,0 +1,7 @@
+.app-profile {
+  padding: 10px;
+}
+.uppy-Root :focus {
+  outline: 0px !important;
+  outline-offset: 3px!important;
+}

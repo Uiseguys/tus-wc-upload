@@ -1,0 +1,19 @@
+{
+  "namespace": "App",
+  "fsNamespace": "app",
+  "loader": "../app.js",
+  "corePolyfilled": "es5-build-disabled.js",
+  "core": "app.core.js",
+  "components": {
+    "cwc-file-chooser": {
+      "bundleIds": {
+        "$": "cwc-file-chooser"
+      }
+    },
+    "cwc-upload-item": {
+      "bundleIds": {
+        "$": "cwc-upload-item"
+      }
+    }
+  }
+}

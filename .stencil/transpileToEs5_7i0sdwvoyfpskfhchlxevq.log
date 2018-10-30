@@ -1,0 +1,319 @@
+/*! Built with http://stenciljs.com */
+App.loadBundle('/**:bundle-id:**/', ['exports'], function (exports) {
+    var h = window.App.h;
+    var AppRoot = /** @class */ (function () {
+        function AppRoot() {
+        }
+        AppRoot.prototype.render = function () {
+            return (h("div", null, h("header", null, h("h1", null, "File Upload Library with Stencil Js")), h("main", { class: "row" }, h("div", { class: "column" }, h("cwc-file-chooser", { allowDrop: "true", allowClick: "true", allowMultiple: "true", serverAddress: "https://master.tus.io/files/" })), h("div", { class: "column" }, h("cwc-upload-item", null)), h("div", { class: "UppyInput-Progress" }))));
+        };
+        Object.defineProperty(AppRoot, "is", {
+            get: function () { return "app-root"; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppRoot, "style", {
+            get: function () { return "/**style-placeholder:app-root:**/"; },
+            enumerable: true,
+            configurable: true
+        });
+        return AppRoot;
+    }());
+    var AppHome = /** @class */ (function () {
+        function AppHome() {
+            this.allowDrop = "true";
+            this.allowClick = "true";
+            this.allowMultiple = "true";
+            this.accept = null;
+            this.serverAddress = "";
+            this.file = [];
+            this.error = [];
+            this.currentFiles = [];
+        }
+        AppHome.prototype.componentDidLoad = function () {
+            if (this.allowMultiple == "true") {
+                this.uppy = Uppy.Core({
+                    debug: true,
+                    autoProceed: true,
+                    restrictions: {
+                        maxNumberOfFiles: null,
+                        allowedFileTypes: this.accept
+                    },
+                });
+            }
+            else {
+                this.uppy = Uppy.Core({
+                    debug: true,
+                    autoProceed: true,
+                    restrictions: {
+                        maxNumberOfFiles: 1,
+                        allowedFileTypes: this.accept
+                    },
+                });
+            }
+            this.initDragDropArea();
+            this.addedFiles();
+            this.uploadFiles();
+            this.progressBarHandler();
+            this.errorHandler();
+            this.uploadSuccess();
+        };
+        AppHome.prototype.initDragDropArea = function () {
+            if (this.allowDrop == "true" && this.allowClick == "true") {
+                var stringsText = this.allowMultiple == "true" ? "Please drop files here or " : "Please drop file or ";
+                this.uppy.use(Uppy.DragDrop, {
+                    target: '#drag-drop-area',
+                    width: '100%',
+                    height: '100%',
+                    note: null,
+                    locale: {
+                        strings: {
+                            dropHereOr: stringsText + '%{browse}',
+                            browse: 'select'
+                        }
+                    }
+                });
+            }
+            else if (this.allowDrop == "true" && this.allowClick == "false") {
+                var stringsText = this.allowMultiple == "true" ? "Please drop files" : "Please drop file";
+                this.uppy.use(Uppy.DragDrop, {
+                    target: '#drag-drop-area',
+                    width: '100%',
+                    height: '100%',
+                    note: null,
+                    locale: {
+                        strings: {
+                            dropHereOr: '',
+                        }
+                    }
+                });
+                var node = document.createElement("h6");
+                var textnode = document.createTextNode(stringsText);
+                node.classList.add("water-mark");
+                node.appendChild(textnode);
+                document.getElementById("drag-drop-area").appendChild(node);
+            }
+            else if (this.allowDrop == "false" && this.allowClick == "true") {
+                this.error = this.error.concat(["Under Development"]);
+            }
+            else {
+                var stringsText = "Please allow drop or allow Click";
+                this.uppy.use(Uppy.DragDrop, {
+                    target: '#drag-drop-area',
+                    width: '100%',
+                    height: '100%',
+                    note: null,
+                    locale: {
+                        strings: {
+                            dropHereOr: stringsText,
+                        }
+                    }
+                });
+                document.getElementById("drag-drop-area").style.pointerEvents = "none";
+            }
+        };
+        AppHome.prototype.addedFiles = function () {
+            var _this = this;
+            this.uppy.on('file-added', function (file) {
+                file['pause'] = false;
+                _this.currentFiles = _this.currentFiles.concat([file]);
+                _this.trackProgress();
+            });
+        };
+        AppHome.prototype.uploadFiles = function () {
+            this.uppy.use(Uppy.Tus, {
+                endpoint: this.serverAddress,
+                resume: true,
+                autoRetry: true,
+                retryDelays: [0, 1000, 3000, 5000]
+            });
+        };
+        AppHome.prototype.uploadSuccess = function () {
+            var _this = this;
+            this.uppy.on('upload-success', function (file, uploadURL) {
+                var index = _this.currentFiles.findIndex(function (x) { return x.id == file.id; });
+                if (index > -1) {
+                    _this.currentFiles.splice(index, 1);
+                }
+                if (uploadURL.file.type == "image/png" ||
+                    uploadURL.file.type == "image/jpg" ||
+                    uploadURL.file.type == "image/jpeg" ||
+                    uploadURL.file.type == "image/svg") {
+                    var img = document.createElement("img");
+                    img.src = uploadURL.url;
+                    var body = document.getElementById("image-list");
+                    body.appendChild(img);
+                }
+            });
+        };
+        AppHome.prototype.progressBarHandler = function () {
+            var StatusBar = Uppy.StatusBar;
+            this.uppy.use(StatusBar, {
+                target: '.UppyInput-Progress',
+                fixed: true,
+                hideAfterFinish: false,
+                hideUploadButton: true
+            });
+        };
+        AppHome.prototype.errorHandler = function () {
+            var _this = this;
+            var timer;
+            this.uppy.on('info-visible', function () {
+                var info = _this.uppy.getState().info;
+                clearInterval(timer);
+                _this.error = _this.error.concat([info.message]);
+            });
+            this.uppy.on('upload-error', function (error) {
+                clearInterval(timer);
+                _this.error = _this.error.concat([error]);
+            });
+            timer = setInterval(function () {
+                _this.error = [];
+            }, 3000);
+        };
+        AppHome.prototype.playPauseDownloading = function (file, i) {
+            this.currentFiles[i].pause = !this.currentFiles[i].pause;
+            this.uppy.pauseResume(file.id);
+        };
+        AppHome.prototype.trackProgress = function () {
+            var _this = this;
+            this.uppy.on('upload-progress', function (file, progress) {
+                var index = _this.currentFiles.findIndex(function (x) { return x.id == file.id; });
+                if (index > -1) {
+                    _this.currentFiles[index].progress.percentage = (progress.bytesUploaded * 100) / progress.bytesTotal;
+                    _this.currentFiles[index].progress.bytesUploaded = progress.bytesUploaded;
+                }
+            });
+        };
+        AppHome.prototype.render = function () {
+            var _this = this;
+            var resumeButton = "<img src='https://png.icons8.com/metro/1600/play.png' >";
+            var pauseButton = "<img src='https://cdn3.iconfinder.com/data/icons/multimedia/100/pause-512.png'/>";
+            return ([
+                h("div", { class: "cwc-file-chooser" }, h("div", { id: "drag-drop-area" }), this.currentFiles.map(function (file, i) { return h("div", { class: "progress-list" }, h("div", { class: "file-name" }, file.name), h("div", { class: "progress-footer" }, h("button", { class: "play-pause-btn", onClick: function () { return _this.playPauseDownloading(file, i); }, innerHTML: file.pause == true ? resumeButton : pauseButton }), h("span", null, file.pause == true ? "Paused" : "Uploading", " : ", Math.round(file.progress.percentage), "%"))); }), h("ul", null, this.error.map(function (err) { return h("li", null, err); })))
+            ]);
+        };
+        Object.defineProperty(AppHome, "is", {
+            get: function () { return "cwc-file-chooser"; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppHome, "properties", {
+            get: function () {
+                return {
+                    "accept": {
+                        "type": "Any",
+                        "attr": "accept"
+                    },
+                    "allowClick": {
+                        "type": "Any",
+                        "attr": "allow-click"
+                    },
+                    "allowDrop": {
+                        "type": "Any",
+                        "attr": "allow-drop"
+                    },
+                    "allowMultiple": {
+                        "type": "Any",
+                        "attr": "allow-multiple"
+                    },
+                    "currentFiles": {
+                        "state": true
+                    },
+                    "error": {
+                        "state": true
+                    },
+                    "file": {
+                        "state": true
+                    },
+                    "serverAddress": {
+                        "type": "Any",
+                        "attr": "server-address"
+                    },
+                    "uppy": {
+                        "state": true
+                    }
+                };
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppHome, "style", {
+            get: function () { return "/**style-placeholder:cwc-file-chooser:**/"; },
+            enumerable: true,
+            configurable: true
+        });
+        return AppHome;
+    }());
+    var AppProfile = /** @class */ (function () {
+        function AppProfile() {
+            this.files = [];
+            this.uppy = Uppy.Core({ debug: true, autoProceed: true });
+        }
+        AppProfile.prototype.componentDidLoad = function () {
+            var FileInput = Uppy.FileInput;
+            this.uppy.use(FileInput, {
+                target: '.UppyForm',
+                pretty: true,
+                inputName: 'files[]',
+                locale: {
+                    strings: {
+                        chooseFiles: 'Choose Files'
+                    }
+                }
+            });
+            this.uppy.on('file-added', function (file) {
+                console.log('Added file', file);
+            });
+            this.uppy.use(Uppy.Tus, { endpoint: 'https://master.tus.io/files/' });
+            var StatusBar = Uppy.StatusBar;
+            this.uppy.use(StatusBar, {
+                target: '.UppyInput-Progress',
+                fixed: true,
+                hideAfterFinish: false,
+                hideUploadButton: true
+            });
+            this.uppy.on('upload-success', function (file, uploadURL) {
+                console.log(file.name, uploadURL);
+                var img = new Image();
+                img.width = 300;
+                img.alt = "";
+                img.src = uploadURL;
+                document.body.appendChild(img);
+            });
+        };
+        AppProfile.prototype.render = function () {
+            return (h("div", { class: "cwc-upload-item" }, h("h2", null, "Using the Input Tag "), h("div", { class: "UppyForm" })));
+        };
+        Object.defineProperty(AppProfile, "is", {
+            get: function () { return "cwc-upload-item"; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppProfile, "properties", {
+            get: function () {
+                return {
+                    "files": {
+                        "type": "Any",
+                        "attr": "files"
+                    },
+                    "uppy": {
+                        "state": true
+                    }
+                };
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppProfile, "style", {
+            get: function () { return "/**style-placeholder:cwc-upload-item:**/"; },
+            enumerable: true,
+            configurable: true
+        });
+        return AppProfile;
+    }());
+    exports.AppRoot = AppRoot;
+    exports.CwcFileChooser = AppHome;
+    exports.CwcUploadItem = AppProfile;
+    Object.defineProperty(exports, '__esModule', { value: true });
+});

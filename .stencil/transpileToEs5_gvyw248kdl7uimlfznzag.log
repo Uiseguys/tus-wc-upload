@@ -1,0 +1,248 @@
+/*! Built with http://stenciljs.com */
+App.loadBundle('/**:bundle-id:**/', ['exports'], function (exports) {
+    var h = window.App.h;
+    var AppUploader = /** @class */ (function () {
+        function AppUploader() {
+            this.endpoint = "";
+            this.file = "Blob";
+            this.upload = true;
+            this.value = "";
+            this.errors = "";
+            this.refreshState = false;
+        }
+        AppUploader.prototype.componentDidLoad = function () {
+            var _this = this;
+            if (this.fileProvided.uploadObj) {
+                this.uploadObj = this.fileProvided.uploadObj;
+                if (this.fileProvided.progress == "100%") {
+                    this.currentFile = this.uploadObj.file;
+                    this.uploadSuccess();
+                }
+                else {
+                    this.currentFile = this.fileProvided;
+                    this.timer = setInterval(function () {
+                        _this.uploadObj.count = _this.uploadObj.count + 1;
+                        _this.refreshState != _this.refreshState;
+                    }, 1000);
+                }
+            }
+            else {
+                this.init(this.fileProvided);
+            }
+        };
+        AppUploader.prototype.init = function (file) {
+            file['pause'] = false;
+            file['uploaded'] = false;
+            file['progress'] = { bytesUploaded: 0, bytesTotal: file.size, percentage: "0%" };
+            file['id'] = Date.now().toString() + file.name;
+            file['count'] = 0;
+            this.currentFile = file;
+            this.placeholderImage(file, file.type);
+            if (this.upload == true) {
+                this.startUploads();
+            }
+            else {
+                this.currentFile.pause = true;
+                this.uploader(this.currentFile);
+            }
+        };
+        AppUploader.prototype.startUploads = function () {
+            this.upload = true;
+            this.uploader(this.currentFile);
+        };
+        AppUploader.prototype.uploader = function (file) {
+            var self = this;
+            this.uploadObj = new tus.Upload(file, {
+                endpoint: this.endpoint,
+                retryDelays: [0, 1000],
+                metadata: {
+                    filename: file.name,
+                    filetype: file.type
+                },
+                onError: function (error) {
+                    self.errorHandler(error);
+                },
+                onProgress: function (bytesUploaded, bytesTotal) {
+                    var percentage = (Math.round((bytesUploaded * 100) / bytesTotal)).toString() + "%";
+                    self.progressHandler(percentage);
+                },
+                onSuccess: function () {
+                    self.uploadSuccess();
+                }
+            });
+            if (file.pause == false) {
+                this.uploadObj.start();
+            }
+            this.save.emit(this.uploadObj);
+        };
+        AppUploader.prototype.progressHandler = function (percentage) {
+            this.currentFile.progress.percentage = percentage;
+            this.refreshState = !this.refreshState;
+            this.progress.emit(this.currentFile);
+        };
+        AppUploader.prototype.uploadSuccess = function () {
+            this.currentFile.uploaded = true;
+            this.refreshState = !this.refreshState;
+        };
+        AppUploader.prototype.errorHandler = function (error) {
+            var _this = this;
+            console.log(error);
+            this.currentFile.pause = true;
+            this.refreshState = !this.refreshState;
+            this.errors = "We got a server error, Please try again.";
+            var timer;
+            clearInterval(timer);
+            timer = setTimeout(function () {
+                _this.errors = "";
+            }, 30000);
+            this.error.emit(this.errors);
+        };
+        AppUploader.prototype.resumeAbortUploading = function () {
+            if (this.upload == true) {
+                this.currentFile.pause = !this.currentFile.pause;
+                if (this.currentFile.pause == true) {
+                    this.uploadObj.abort();
+                }
+                else {
+                    this.uploadObj.start();
+                }
+            }
+            else {
+                this.currentFile.pause = false;
+                this.uploader(this.currentFile);
+            }
+            if (this.errors != "") {
+                this.errors = "";
+                this.save.emit(this.uploadObj);
+            }
+            this.refreshState = !this.refreshState;
+        };
+        AppUploader.prototype.cancelUpload = function () {
+            this.uploadObj.abort();
+            this.refreshState = !this.refreshState;
+            this.cancelEvent.emit(this.currentFile);
+        };
+        AppUploader.prototype.placeholderImage = function (file, type) {
+            var first = type.split('/')[0];
+            if (first == "image") {
+                this.getBase64(file);
+            }
+            else {
+                this.currentFile.src = "https://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/thumbnail/thumbnail_placeholder_256.png";
+            }
+        };
+        AppUploader.prototype.getBase64 = function (file) {
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            var self = this;
+            reader.onload = function () {
+                self.currentFile.src = reader.result;
+            };
+            reader.onerror = function (error) {
+                console.log(error);
+            };
+        };
+        AppUploader.prototype.render = function () {
+            var _this = this;
+            var resumeButton = "<img src='/assets/icon/upload-button.svg' >";
+            var pauseButton = "<img src='/assets/icon/pause.svg'/>";
+            var check = "<img src='/assets/icon/checked.svg' />";
+            return (h("div", { class: "st_wid_100" }, this.currentFile ?
+                h("div", { class: "st_allContent" }, h("div", null, this.endpoint == "" ? "No endpoint given." : this.upload == false ? "Ready to upload" :
+                    null), h("slot", { name: "file-preview" }, h("div", { class: "st_image" }, h("img", { src: this.currentFile.src, class: "st_wid_100" }), this.errors ? h("div", { class: "overlay_error" }, " ", this.errors, " ") : null)), h("div", { class: "st_barVDOcancel st_w_100" }, h("div", { class: "st_row st_bg" }, h("div", { class: "st_wid_15 tick" }, this.currentFile.uploaded == true ?
+                    h("a", { class: "st_closeBtn", innerHTML: check })
+                    : this.currentFile.pause == true ?
+                        h("a", { class: "st_closeBtn", innerHTML: resumeButton, onClick: function () { return _this.resumeAbortUploading(); } }, " ")
+                        : h("a", { class: "st_closeBtn", innerHTML: pauseButton, onClick: function () { return _this.resumeAbortUploading(); } })), h("div", { class: "st_right_sec" }, h("div", { class: "file_name" }, h("p", { class: "upload-name" }, "  ", this.currentFile.name.slice(0, 15)), h("div", { class: "st_wid_18" }, h("a", { class: "fnt-14" }, this.currentFile.progress.percentage))), h("div", { class: "st_wid_52" }, h("slot", { name: "progress" }, h("div", { class: "st_progress-bar" }, h("div", { class: "st_loaded", style: { width: (this.currentFile.progress.percentage) } })))), h("div", { class: "st_wid_15 cancel", onClick: function () { return _this.cancelUpload(); } }, h("slot", { name: "cancel-Button" }, h("a", { class: "st_closeBtn" }, h("img", { src: "/assets/icon/close-circle.svg" }))))))))
+                : null));
+        };
+        Object.defineProperty(AppUploader, "is", {
+            get: function () { return "cwc-upload-item"; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppUploader, "properties", {
+            get: function () {
+                return {
+                    "currentFile": {
+                        "state": true
+                    },
+                    "endpoint": {
+                        "type": "Any",
+                        "attr": "endpoint"
+                    },
+                    "errors": {
+                        "state": true
+                    },
+                    "file": {
+                        "type": String,
+                        "attr": "file"
+                    },
+                    "fileProvided": {
+                        "type": "Any",
+                        "attr": "file-provided"
+                    },
+                    "refreshState": {
+                        "state": true
+                    },
+                    "timer": {
+                        "state": true
+                    },
+                    "upload": {
+                        "type": Boolean,
+                        "attr": "upload",
+                        "mutable": true
+                    },
+                    "uploadObj": {
+                        "state": true
+                    },
+                    "value": {
+                        "type": String,
+                        "attr": "value"
+                    }
+                };
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppUploader, "events", {
+            get: function () {
+                return [{
+                        "name": "error",
+                        "method": "error",
+                        "bubbles": true,
+                        "cancelable": true,
+                        "composed": true
+                    }, {
+                        "name": "cancelEvent",
+                        "method": "cancelEvent",
+                        "bubbles": true,
+                        "cancelable": true,
+                        "composed": true
+                    }, {
+                        "name": "progress",
+                        "method": "progress",
+                        "bubbles": true,
+                        "cancelable": true,
+                        "composed": true
+                    }, {
+                        "name": "save",
+                        "method": "save",
+                        "bubbles": true,
+                        "cancelable": true,
+                        "composed": true
+                    }];
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AppUploader, "style", {
+            get: function () { return "/**style-placeholder:cwc-upload-item:**/"; },
+            enumerable: true,
+            configurable: true
+        });
+        return AppUploader;
+    }());
+    exports.CwcUploadItem = AppUploader;
+    Object.defineProperty(exports, '__esModule', { value: true });
+});

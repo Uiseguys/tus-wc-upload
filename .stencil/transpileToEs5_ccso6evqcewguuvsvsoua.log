@@ -1,0 +1,183 @@
+/*! Built with http://stenciljs.com */
+import { h } from '../app.core.js';
+var AppChooser = /** @class */ (function () {
+    function AppChooser() {
+        this.allowDrop = "true";
+        this.allowClick = "true";
+        this.allowMultiple = "true";
+        this.accept = [];
+        this.file = [];
+        this.error = [];
+        this.currentFiles = [];
+        this.upload = [];
+        this.stringsText = "";
+    }
+    AppChooser.prototype.componentDidLoad = function () {
+        this.initDragDropArea();
+    };
+    AppChooser.prototype.initDragDropArea = function () {
+        if (this.allowDrop == "true" && this.allowClick == "true") {
+            this.stringsText = this.allowMultiple == "true" ? "Please drop files here or " : "Please drop file or ";
+        }
+        else if (this.allowDrop == "true" && this.allowClick == "false") {
+            this.stringsText = this.allowMultiple == "true" ? "Please drop files" : "Please drop file";
+        }
+        else if (this.allowDrop == "false" && this.allowClick == "true") {
+            this.stringsText = "";
+        }
+        else {
+            this.stringsText = "Please allow drop or allow Click";
+        }
+    };
+    AppChooser.prototype.handleChange = function (e) {
+        this.currentFiles = [];
+        this.addedFiles(e.target.files);
+        this.push.emit(e);
+    };
+    AppChooser.prototype.drop = function (e) {
+        e.preventDefault();
+        if (this.allowMultiple == "true") {
+            this.addedFiles(e.dataTransfer.files);
+        }
+        else {
+            if (e.dataTransfer.files.length > 1) {
+                this.errorHandler("You can upload single file at a time.");
+                var passedFiles = [];
+                passedFiles = passedFiles.concat([e.dataTransfer.files[0]]);
+                this.addedFiles(passedFiles);
+            }
+            else {
+                this.addedFiles(e.dataTransfer.files);
+            }
+        }
+    };
+    AppChooser.prototype.addedFiles = function (files) {
+        var hit;
+        if (this.accept == [] || this.accept.length == 0 || this.accept == null) {
+            this.filesChosen.emit(files);
+        }
+        else {
+            var checkedFile = [];
+            for (var j = 0; j < files.length; j++) {
+                hit = false;
+                for (var i = 0; i < this.accept.length; i++) {
+                    if (this.formatValidator(this.accept[i], files[j].type) == true) {
+                        hit = true;
+                        checkedFile = checkedFile.concat([files[j]]);
+                        break;
+                    }
+                }
+                if (hit == false) {
+                    this.errorHandler("Please select the file of required format.");
+                }
+            }
+            this.filesChosen.emit(checkedFile);
+        }
+    };
+    AppChooser.prototype.formatValidator = function (accept, incoming) {
+        accept = accept.slice(accept.indexOf(".") + 1, accept.length);
+        incoming = incoming.slice(incoming.indexOf("/") + 1, incoming.length);
+        if (accept == incoming) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+    AppChooser.prototype.allowDropFile = function (ev) {
+        if (this.allowDrop == "true") {
+            ev.preventDefault();
+        }
+    };
+    AppChooser.prototype.errorHandler = function (error) {
+        var _this = this;
+        this.error = this.error.concat([error]);
+        var timer;
+        clearInterval(timer);
+        timer = setInterval(function () {
+            _this.error = [];
+        }, 5000);
+    };
+    AppChooser.prototype.render = function () {
+        var _this = this;
+        var multiple = this.allowMultiple == "true" ? true : false;
+        return ([
+            h("div", { class: "st_container" }, h("div", { class: "st_top_50 dashed-border", onDrop: function (e) { return _this.drop(e); }, onDragOver: function (e) { return _this.allowDropFile(e); } }, h("div", { class: "st_file_contain st_text-center" }, h("div", { class: "st_file_icon" }, h("div", { class: "st_scb-drop-area" }, h("img", { src: "/assets/icon/arrow-pointing-up.svg" }))), h("div", { class: "st_scb-fi-default-label" }, h("slot", { name: "drop-target" }, h("p", null, this.stringsText, " ")), h("slot", { name: "text" })), this.allowClick == "true" ?
+                h("div", { class: "st_file-upload" }, h("slot", { name: "dialog-trigger" }, h("label", { class: "st_file-upload__label" }, "Choose", this.allowMultiple == "true" ? " Files" : " File")), h("input", { id: "upload", class: "st_file-upload__input", type: "file", onChange: function (e) { return _this.handleChange(e); }, accept: this.accept.toString(), multiple: multiple }))
+                : null, h("div", { class: "st_scb-fi-default-error" }, this.error.map(function (err) { return h("p", { class: "error_one" }, h("img", { src: "/assets/icon/error-triangle.svg" }), err, " "); })))))
+        ]);
+    };
+    Object.defineProperty(AppChooser, "is", {
+        get: function () { return "cwc-file-chooser"; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(AppChooser, "properties", {
+        get: function () {
+            return {
+                "accept": {
+                    "type": "Any",
+                    "attr": "accept"
+                },
+                "allowClick": {
+                    "type": String,
+                    "attr": "allow-click"
+                },
+                "allowDrop": {
+                    "type": String,
+                    "attr": "allow-drop"
+                },
+                "allowMultiple": {
+                    "type": String,
+                    "attr": "allow-multiple"
+                },
+                "currentFiles": {
+                    "state": true
+                },
+                "error": {
+                    "state": true
+                },
+                "file": {
+                    "state": true
+                },
+                "stringsText": {
+                    "state": true
+                },
+                "upload": {
+                    "state": true
+                },
+                "uppy": {
+                    "state": true
+                }
+            };
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(AppChooser, "events", {
+        get: function () {
+            return [{
+                    "name": "push",
+                    "method": "push",
+                    "bubbles": true,
+                    "cancelable": true,
+                    "composed": true
+                }, {
+                    "name": "filesChosen",
+                    "method": "filesChosen",
+                    "bubbles": true,
+                    "cancelable": true,
+                    "composed": true
+                }];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(AppChooser, "style", {
+        get: function () { return "/**style-placeholder:cwc-file-chooser:**/"; },
+        enumerable: true,
+        configurable: true
+    });
+    return AppChooser;
+}());
+export { AppChooser as CwcFileChooser };
