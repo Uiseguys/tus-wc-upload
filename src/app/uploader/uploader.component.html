@@ -1,0 +1,44 @@
+<cwc-file-chooser [allowDrop]=true [allowClick]=true
+ [allowMultiple]=true (filesChosen)=fileChoosen($event)>
+  <!-- <div slot="drop-target">My custom Drop Target Text</div>
+  <div slot="text">My custom Text</div>
+  <label slot="dialog-trigger" class="st_file-upload__label">My custom Button Text</label> -->
+</cwc-file-chooser>
+
+<div class="st_container">
+
+  <div class="st_content_align_center">
+
+    <div class="st_uploaded_file st_w_100 st_text-center">
+
+      <div class="uploaded_images">
+        <div class="st_row">
+
+          <div *ngFor="let file of fileList" style="    margin: 15px;min-width: 421px;">
+
+            <cwc-upload-item 
+                  [fileProvided]=file 
+                  [endpoint]="'https://master.tus.io/files/'" 
+                  [file]="Blob" 
+                  [upload]=true
+                  indicator="circular"
+                  (cancelEvent)=onCancel($event)
+                  (progress)=onProgress($event)
+                  (save)=onSave($event)
+                  >
+            
+                  <!-- <div slot="cancel-Button">
+                    <a class="st_closeBtn">
+                      <img src="/assets/icon/cancel.svg" />
+                    </a>
+                  </div> -->
+          
+          </cwc-upload-item>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

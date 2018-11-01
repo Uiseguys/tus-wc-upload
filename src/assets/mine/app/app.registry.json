@@ -1,0 +1,19 @@
+{
+  "namespace": "App",
+  "fsNamespace": "app",
+  "loader": "../app.js",
+  "core": "app.kgjct6xy.js",
+  "corePolyfilled": "app.iaqrjvs4.js",
+  "components": {
+    "cwc-file-chooser": {
+      "bundleIds": {
+        "$": "lgnruvvx"
+      }
+    },
+    "cwc-upload-item": {
+      "bundleIds": {
+        "$": "lzdwehg2"
+      }
+    }
+  }
+}
