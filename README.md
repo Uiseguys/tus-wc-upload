@@ -1,1 +1,0 @@
-# tus-wc-upload

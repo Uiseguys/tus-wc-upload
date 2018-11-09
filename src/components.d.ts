@@ -12,17 +12,34 @@ import '@stencil/core';
 
 export namespace Components {
 
+  interface CwcFileRoot {
+    'errors': (e: any) => void;
+  }
+  interface CwcFileRootAttributes extends StencilHTMLAttributes {
+    'onAllFiles'?: (event: CustomEvent) => void;
+  }
+
   interface CwcFileChooser {
     'accept': string[];
+    'acceptRatio': string[];
     'allowClick': boolean;
     'allowDrop': boolean;
     'allowMultiple': boolean;
+    'maxHeight': number;
+    'maxWidth': number;
+    'minHeight': number;
+    'minWidth': number;
   }
   interface CwcFileChooserAttributes extends StencilHTMLAttributes {
     'accept'?: string[];
+    'acceptRatio'?: string[];
     'allowClick'?: boolean;
     'allowDrop'?: boolean;
     'allowMultiple'?: boolean;
+    'maxHeight'?: number;
+    'maxWidth'?: number;
+    'minHeight'?: number;
+    'minWidth'?: number;
     'onFilesChosen'?: (event: CustomEvent) => void;
   }
 
@@ -50,15 +67,23 @@ export namespace Components {
 
 declare global {
   interface StencilElementInterfaces {
+    'CwcFileRoot': Components.CwcFileRoot;
     'CwcFileChooser': Components.CwcFileChooser;
     'CwcUploadItem': Components.CwcUploadItem;
   }
 
   interface StencilIntrinsicElements {
+    'cwc-file-root': Components.CwcFileRootAttributes;
     'cwc-file-chooser': Components.CwcFileChooserAttributes;
     'cwc-upload-item': Components.CwcUploadItemAttributes;
   }
 
+
+  interface HTMLCwcFileRootElement extends Components.CwcFileRoot, HTMLStencilElement {}
+  var HTMLCwcFileRootElement: {
+    prototype: HTMLCwcFileRootElement;
+    new (): HTMLCwcFileRootElement;
+  };
 
   interface HTMLCwcFileChooserElement extends Components.CwcFileChooser, HTMLStencilElement {}
   var HTMLCwcFileChooserElement: {
@@ -73,11 +98,13 @@ declare global {
   };
 
   interface HTMLElementTagNameMap {
+    'cwc-file-root': HTMLCwcFileRootElement
     'cwc-file-chooser': HTMLCwcFileChooserElement
     'cwc-upload-item': HTMLCwcUploadItemElement
   }
 
   interface ElementTagNameMap {
+    'cwc-file-root': HTMLCwcFileRootElement;
     'cwc-file-chooser': HTMLCwcFileChooserElement;
     'cwc-upload-item': HTMLCwcUploadItemElement;
   }

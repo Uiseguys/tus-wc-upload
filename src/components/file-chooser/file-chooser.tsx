@@ -10,13 +10,29 @@ export class AppChooser {
   @Prop() allowClick: boolean = true;
   @Prop() allowMultiple: boolean = true;
   @Prop() accept: string[] = [];
+  @Prop() acceptRatio: string[] = [];
+  @Prop() maxWidth: number = null;
+  @Prop() maxHeight: number = null;
+  @Prop() minWidth: number = null;
+  @Prop() minHeight: number = null;
 
   @Event() filesChosen: EventEmitter;
   @State() error: string[] = [];
   @State() stringsText: string = ""
+  @State() passedFiles: any[];
+  @State() validRatio: number[] = [];
+  index = 0;
 
   componentDidLoad() {
     this.initDragDropArea();
+    if (this.acceptRatio && this.acceptRatio.length > 0) {
+      for (let i = 0; i < this.acceptRatio.length; i++) {
+        let [width, height] = this.acceptRatio[i].split(':');
+        let ratio = parseInt(width, 10) / parseInt(height, 10);
+        ratio = parseFloat(ratio.toFixed(1))
+        this.validRatio = [...this.validRatio, ratio];
+      }
+    }
   }
 
   /**
@@ -80,8 +96,7 @@ export class AppChooser {
   addedFiles(files) {
     var hit;
     if (this.accept == [] || this.accept.length == 0 || this.accept == null) {
-      this.filesChosen.emit(files);
-
+      this.checkForSize(files)
     } else {
       let checkedFile = [];
 
@@ -96,12 +111,111 @@ export class AppChooser {
             break;
           }
         }
+
         if (hit == false) {
           this.errorHandler("Please select the file of required format.")
         }
       }
+      this.checkForSize(checkedFile)
+    }
+  }
 
-      this.filesChosen.emit(checkedFile);
+  /**
+   * Aspect Ratio and width or height validtion
+   * @param files 
+   */
+  checkForSize(files) {
+    this.passedFiles = []
+    this.passedFiles = [...files];
+    var self = this;
+
+    if (self.maxWidth || self.maxHeight || self.minHeight || self.minWidth || self.validRatio.length > 0) {
+      this.index = 0;
+      this.fileLoop(this.passedFiles[this.index])
+    }
+    else {
+      this.filesChosen.emit(this.passedFiles)
+    }
+  }
+
+  /**
+   * Loop for processing the files
+   * @param file 
+   */
+  fileLoop(file) {
+    if (file) {
+      let [first] = file.type.split('/')
+      var self = this;
+      if (first === "image") {
+        var _URL = window.URL;
+        var img = new Image();
+        img.onload = function () {
+          var width = img.naturalWidth || img.width;
+          var height = img.naturalHeight || img.height;
+
+          var isValid = true;
+          if (self.maxWidth && width > self.maxWidth) {
+            isValid = false;
+          }
+          if (self.maxHeight && height > self.maxHeight) {
+            isValid = false;
+          }
+          if (self.minHeight && height < self.minHeight) {
+            isValid = false;
+          }
+          if (self.minWidth && width < self.minWidth) {
+            isValid = false;
+          }
+          if (isValid === false) {
+            self.errorHandler("Please select the file of given size limit.")
+            return true;
+          } else {
+            if (self.validRatio && self.validRatio.length > 0) {
+              var ratio = width / height;
+              ratio = parseFloat(ratio.toFixed(1))
+
+              for (let k = 0; k < self.validRatio.length; k++) {
+                if (ratio === self.validRatio[k]) {
+                  isValid = true;
+                  break;
+                } else {
+                  isValid = false
+                }
+              }
+              if (isValid === false) {
+                self.errorHandler("Please select the file of given Aspect Ratio.")
+                return false;
+              } else {
+                self.filesChosen.emit([file]);
+                return true;
+              }
+            }
+            else {
+              self.filesChosen.emit([file]);
+              return true;
+            }
+          }
+        }
+
+        img.onerror = function () {
+          alert("not a valid file: " + file.type);
+        };
+
+        img.src = _URL.createObjectURL(file);
+        setTimeout(() => {
+          if (this.index < this.passedFiles.length) {
+            this.index = this.index + 1;
+            this.fileLoop(this.passedFiles[this.index]);
+          }
+        }, 1000);
+
+      } else {
+        self.filesChosen.emit([file]);
+        if (this.index < this.passedFiles.length) {
+          this.index = this.index + 1;
+          this.fileLoop(this.passedFiles[this.index]);
+        }
+      }
     }
   }
 
@@ -144,7 +258,6 @@ export class AppChooser {
       this.error = [];
     }, 5000)
   }
-
 
   render() {
     var multiple: boolean = this.allowMultiple == true ? true : false;
